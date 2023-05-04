@@ -1,6 +1,5 @@
 import java.sql.*;
 import java.util.ArrayList;
-
 import static java.lang.System.exit;
 
 public class databaseUtility {
@@ -51,6 +50,17 @@ public class databaseUtility {
         return primaryKeyTable;
     }
 
+    private int getDistinctCountOfRows(String tableName, String columnName) throws SQLException {
+        int distinctCount = 0;
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery("SELECT COUNT(DISTINCT " + columnName + ") FROM " + tableName);
+        if (resultSet.next()) {
+            distinctCount = resultSet.getInt(1);
+            System.out.println("Distinct count: " + distinctCount);
+        }
+        return distinctCount;
+    }
+
     // calculates & returns the number of rows in a table using a sql query
     private int getRowCountOfTable(String tableName) throws SQLException {
         int rowCount = 0;
@@ -59,7 +69,7 @@ public class databaseUtility {
         // execute the row count query
         ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM " + tableName);
 
-         if(resultSet.next()) {
+        if(resultSet.next()) {
             rowCount = resultSet.getInt(1);
         }
 
@@ -117,20 +127,32 @@ public class databaseUtility {
     // calculates & returns the estimated row count
     public int estimateJoinSize(String table1, String table2) throws SQLException {
 
-        // handles the case when table 1 = table 2
+        // handles the case when R = S
         if(table1.equals(table2)){
             return getRowCountOfTable(table1);
         }
 
-        // handles the case when table R ∩ S is a primary key for R or S
-        if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1)) && getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2))){
-            return Math.min(getRowCountOfTable(table1), getRowCountOfTable(table2));
-        } else if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1))){
-            return getRowCountOfTable(table2);
-        } else if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2))){
-            return getRowCountOfTable(table1);
-        } else{
+        // handles the case when R ∩ S = Φ
+        if(getIntersectingColumns(table1, table2).isEmpty()){
             return getRowCountOfTable(table1) * getRowCountOfTable(table2);
         }
+
+        // handles the case when R ∩ S is a primary key for R or S or both
+        if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1)) && !getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2)) ){
+            return getRowCountOfTable(table2);
+        } else if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2)) && !getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1))){
+            return getRowCountOfTable(table1);
+        } else if (getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2)) && getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1))){
+            return Math.min(getRowCountOfTable(table1), getRowCountOfTable(table2));
+        }
+
+        // handles the case when table R ∩ S is NOT a primary key for either R or S
+        if(!getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1)) && !getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2))){
+            int Vtable1 = (getRowCountOfTable(table1) * getRowCountOfTable(table2))/ getDistinctCountOfRows(table1, getIntersectingColumns(table1, table2).get(0));
+            int Vtable2 = (getRowCountOfTable(table1) * getRowCountOfTable(table2))/ getDistinctCountOfRows(table2, getIntersectingColumns(table1, table2).get(0));
+            return Math.min(Vtable1, Vtable2);
+        }
+
+        return 0;
     }
 }
