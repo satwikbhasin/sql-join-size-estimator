@@ -4,25 +4,31 @@ import java.util.Scanner;
 public class Homework8_Satwik_Bhasin {
     public static void main(String[] args) throws SQLException {
 
-        databaseConnection connection = new databaseConnection();
-        connection.connect();
-        databaseUtility databaseUtility = new databaseUtility(connection);
+        // creating a new object of class databaseConnector
+        databaseConnector connector = new databaseConnector();
+
+        // connecting to the database using the newly created object's connect() method
+        connector.connect();
+
+         /*creating a new databaseUtility object with the connector as a constructor
+         argument which lets us perform actions on the database*/
+        databaseUtility utility = new databaseUtility(connector);
 
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("\nEnter 1st table name: ");
-        String table1 = scanner.nextLine();
-        if(databaseUtility.doesTableExist(table1)) {
+        String table1 = scanner.nextLine().toLowerCase();
+        if(utility.doesTableExist(table1)) {
             System.out.print("Enter 2nd table name: ");
-            String table2 = scanner.nextLine();
-            if (databaseUtility.doesTableExist(table2)) {
+            String table2 = scanner.nextLine().toLowerCase();
+            if (utility.doesTableExist(table2)) {
 
-                databaseUtility.printTablesInfo(table1);
-                databaseUtility.printTablesInfo(table2);
-                databaseUtility.printIntersectingColumns(table1, table2);
+                utility.printTablesInfo(table1);
+                utility.printTablesInfo(table2);
+                utility.printIntersectingColumns(table1, table2);
 
-                int estimatedJoinSize = databaseUtility.estimateJoinSize(table1, table2);
-                int actualJoinSize = databaseUtility.actualJoinSize(table1, table2);
+                int estimatedJoinSize = utility.estimateJoinSize(table1, table2);
+                int actualJoinSize = utility.actualJoinSize(table1, table2);
                 System.out.println("\n--------------------------------------- FINAL SOLUTION ---------------------------------------");
                 System.out.println("\nEstimated join size: " + estimatedJoinSize);
                 System.out.println("Actual join size: " + actualJoinSize);
@@ -35,7 +41,7 @@ public class Homework8_Satwik_Bhasin {
         } else {
             System.out.println("No table found with name: '" + table1 + "'");
         }
-        connection.disconnect(connection.connection);
+        connector.disconnect(connector.connection);
 
     }
 }

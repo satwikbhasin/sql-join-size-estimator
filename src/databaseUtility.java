@@ -5,10 +5,12 @@ import static java.lang.System.exit;
 public class databaseUtility {
 
     Connection connection;
-    databaseConnection databaseConnection;
-    databaseUtility(databaseConnection connection){
-        this.databaseConnection = connection;
-        this.connection = connection.connection;
+    databaseConnector databaseConnector;
+
+    //constructor that initializes the class databaseConnector variable to the given databaseConnector object
+    databaseUtility(databaseConnector connector){
+        this.databaseConnector = connector;
+        this.connection = connector.connection;
     }
 
     // returns the metadata of the connected database
@@ -16,10 +18,11 @@ public class databaseUtility {
         return this.connection.getMetaData();
     }
 
+    // returns a boolean value which states whether the given string matches a table name in the database or not
     public boolean doesTableExist(String tableName) throws SQLException {
         if(tableName.isEmpty()){
             System.out.println("Error: Blank table name!");
-            this.databaseConnection.disconnect(connection);
+            this.databaseConnector.disconnect(connection);
             exit(0);
         }
         DatabaseMetaData metadata = getMetaData();

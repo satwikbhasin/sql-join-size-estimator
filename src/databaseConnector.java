@@ -2,7 +2,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class databaseConnection {
+public class databaseConnector {
     String url;
     String database;
     String port;
@@ -10,8 +10,8 @@ public class databaseConnection {
     String password;
     Connection connection;
 
-    databaseConnection() {
-        // postgreSQL database credentials
+    // constructor that initializes the class members to some default values
+    databaseConnector() {
 
         // change this to whatever you have named the university dataset as
         this.database = "universityDataset";
@@ -20,7 +20,11 @@ public class databaseConnection {
         this.port = "5432";
 
         this.url = "jdbc:postgresql://localhost:";
+
+        // change this to your postgres username
         this.username = "postgres";
+
+        // change this to your postgres master password
         this.password = "Thumbsup10";
     }
 
