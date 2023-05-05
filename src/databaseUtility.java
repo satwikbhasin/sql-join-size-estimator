@@ -1,5 +1,6 @@
 import java.sql.*;
 import java.util.ArrayList;
+import static java.lang.System.exit;
 
 public class databaseUtility {
 
@@ -19,7 +20,11 @@ public class databaseUtility {
 
     // returns a boolean value which states whether the given string matches a table name in the database or not
     public boolean doesTableExist(String tableName) throws SQLException {
-
+        if(tableName.isEmpty()){
+            System.out.println("Error: Blank table name!");
+            this.databaseConnector.disconnect(connection);
+            exit(0);
+        }
         DatabaseMetaData metadata = getMetaData();
         ResultSet table = metadata.getTables(null, null, tableName, null);
 
@@ -48,22 +53,13 @@ public class databaseUtility {
         return primaryKeyTable;
     }
 
-    private ArrayList<String> getForeignKey(String tableName) throws SQLException {
-        ResultSet foreignKeyResultSet = getMetaData().getImportedKeys(null, null, tableName);
-        ArrayList<String> foreignKeys = new ArrayList<>();
-        while (foreignKeyResultSet.next()) {
-            foreignKeys.add(foreignKeyResultSet.getString("FKCOLUMN_NAME"));
-        }
-        foreignKeyResultSet.close();
-        return foreignKeys;
-    }
-
     private int getDistinctCountOfRows(String tableName, String columnName) throws SQLException {
         int distinctCount = 0;
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT COUNT(DISTINCT " + columnName + ") FROM " + tableName);
         if (resultSet.next()) {
             distinctCount = resultSet.getInt(1);
+            System.out.println("Distinct count: " + distinctCount);
         }
         return distinctCount;
     }
@@ -102,7 +98,6 @@ public class databaseUtility {
         System.out.println("\nInformation on '" + tableName + "'");
         System.out.println("Columns: " + getColumns(tableName));
         System.out.println("Primary Key(s): " + getPrimaryKey(tableName));
-        System.out.println("Foreign Key(s): " + getForeignKey(tableName));
         System.out.println("Row count: " + getRowCountOfTable(tableName));
     }
 
@@ -135,20 +130,20 @@ public class databaseUtility {
     // calculates & returns the estimated row count
     public int estimateJoinSize(String table1, String table2) throws SQLException {
 
-        // handles the case when R = S i.e. when the user inputs the same table name for both tables
+        // handles the case when R = S
         if(table1.equals(table2)){
             return getRowCountOfTable(table1);
         }
 
-        // handles the case when R ∩ S = Φ i.e. they have nothing in common
+        // handles the case when R ∩ S = Φ
         if(getIntersectingColumns(table1, table2).isEmpty()){
             return getRowCountOfTable(table1) * getRowCountOfTable(table2);
         }
 
         // handles the case when R ∩ S is a primary key for R or S or both
-        if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1))){
+        if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1)) && !getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2)) ){
             return getRowCountOfTable(table2);
-        } else if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2))){
+        } else if(getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2)) && !getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1))){
             return getRowCountOfTable(table1);
         } else if (getIntersectingColumns(table1, table2).equals(getPrimaryKey(table2)) && getIntersectingColumns(table1, table2).equals(getPrimaryKey(table1))){
             return Math.min(getRowCountOfTable(table1), getRowCountOfTable(table2));
